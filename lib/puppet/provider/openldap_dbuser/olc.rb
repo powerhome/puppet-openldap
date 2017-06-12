@@ -21,7 +21,6 @@ Puppet::Type.type(:openldap_dbuser).provide(:olc) do
       db_attrs.each do |line|
         if line =~ /^olcSuffix: /
           suffix = line.split(' ')[1]
-          notice("Discovered database suffix: #{suffix}")
           suffixes << suffix
         end
       end
@@ -32,7 +31,6 @@ Puppet::Type.type(:openldap_dbuser).provide(:olc) do
 
     # Look for system user account
     suffixes.each do |suffix|
-      notice("Parsing users for suffix: #{suffix}")
 
       # Database users
       users = ldapsearch('-Q', '-LLL', '-Y', 'EXTERNAL', '-b', suffix, '-H', 'ldapi:///', "(description=user)").split("\n\n")
@@ -42,14 +40,11 @@ Puppet::Type.type(:openldap_dbuser).provide(:olc) do
           # Get the user name
           if line =~ /^cn: /
             user = line.split(": ")[1]
-            notice("Discovered user CN: #{user}")
           end
 
           # Get the user password
           if line =~ /^userPassword:: /
             passwd = line.split(":: ")[1]
-            notice("Discovered user password: #{passwd}")
-            notice("Creating new user object instance...")
 
             # New instance
             instances << new(
