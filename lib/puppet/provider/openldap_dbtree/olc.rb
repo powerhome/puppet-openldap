@@ -1,6 +1,6 @@
 require 'tempfile'
 
-Puppet::Type.type(:openldap_cluster_dbtree).provide(:olc) do
+Puppet::Type.type(:openldap_dbtree).provide(:olc) do
   defaultfor :operatingsystem => :debian
 
   # Provider commands
