@@ -54,7 +54,7 @@ Puppet::Type.type(:openldap_dbuser).provide(:olc) do
             # New instance
             instances << new(
               :ensure => :present,
-              :name   => "#{suffix} #{user}",
+              :name   => user,
               :suffix => suffix,
               :user   => user,
               :passwd => passwd
