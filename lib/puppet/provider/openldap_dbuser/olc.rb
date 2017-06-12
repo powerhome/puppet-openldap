@@ -48,6 +48,8 @@ Puppet::Type.type(:openldap_dbuser).provide(:olc) do
           # Get the user password
           if line =~ /^userPassword:: /
             passwd = line.split(":: ")[1]
+            notice("Discovered user password: #{passwd}")
+            notice("Creating new user object instance...")
 
             # New instance
             instances << new(
