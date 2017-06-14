@@ -12,10 +12,12 @@ define openldap::server::overlay(
 
   if $::openldap::server::provider == 'augeas' {
     Class['openldap::server::install']
+    -> Openldap::Server::Database[$suffix]
     -> Openldap::Server::Overlay[$title]
     ~> Class['openldap::server::service']
   } else {
     Class['openldap::server::service']
+    -> Openldap::Server::Database[$suffix]
     -> Openldap::Server::Overlay[$title]
     -> Class['openldap::server']
   }
