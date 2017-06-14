@@ -227,4 +227,12 @@ Puppet::Type.newtype(:openldap_database) do
       end
     end
   end
+
+  newparam(:accessrules, :boolean => true) do
+    desc "Whether to add the default access rules to the database. It defaults to true"
+
+    newvalues(:true, :false)
+    defaultto :true
+  end
+
 end

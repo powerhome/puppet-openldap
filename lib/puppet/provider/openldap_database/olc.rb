@@ -33,6 +33,7 @@ Puppet::Type.
       syncrepl = nil
       limits = []
       security = {}
+      accessrules = nil
       paragraph.gsub("\n ", "").split("\n").collect do |line|
         case line
         when /^olcDatabase: /
@@ -124,7 +125,8 @@ Puppet::Type.
         :syncusesubentry => syncusesubentry,
         :syncrepl        => syncrepl,
         :limits          => limits,
-        :security        => security
+        :security        => security,
+        :accessrules     => accessrules
       )
     end
   end
@@ -251,16 +253,18 @@ Puppet::Type.
     t << "#{resource[:limits].collect { |x| "olcLimits: #{x}" }.join("\n")}\n" if resource[:limits] and !resource[:limits].empty?
     t << "#{resource[:security].collect { |k, v| "olcSecurity: #{k}=#{v}" }.join("\n")}\n" if resource[:security] and !resource[:security].empty?
     t << "olcAccess: to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break\n"
-    t << "olcAccess: to attrs=userPassword\n"
-    t << "  by self write\n"
-    t << "  by anonymous auth\n"
-    t << "  by dn=\"cn=admin,#{resource[:suffix]}\" write\n"
-    t << "  by * none\n"
-    t << "olcAccess: to dn.base=\"\" by * read\n"
-    t << "olcAccess: to *\n"
-    t << "  by self write\n"
-    t << "  by dn=\"cn=admin,#{resource[:suffix]}\" write\n"
-    t << "  by * read\n"
+    if resource[:accessrules] == :true
+      t << "olcAccess: to attrs=userPassword\n"
+      t << "  by self write\n"
+      t << "  by anonymous auth\n"
+      t << "  by dn=\"cn=admin,#{resource[:suffix]}\" write\n"
+      t << "  by * none\n"
+      t << "olcAccess: to dn.base=\"\" by * read\n"
+      t << "olcAccess: to *\n"
+      t << "  by self write\n"
+      t << "  by dn=\"cn=admin,#{resource[:suffix]}\" write\n"
+      t << "  by * read\n"
+    end
     t.close
     Puppet.debug(IO.read t.path)
     begin
@@ -346,6 +350,10 @@ Puppet::Type.
 
   def security=(value)
     @property_flush[:security] = value
+  end
+
+  def accessrules=(value)
+    @property_flush[:accessrules] = value
   end
 
   def flush
