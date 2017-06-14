@@ -14,6 +14,7 @@ define openldap::server::database(
   $timelimit                                = undef,
   $updateref                                = undef,
   $limits                                   = undef,
+  $accessrules                              = true,
   # BDB/HDB options
   $dboptions                                = undef,
   $synctype                                 = undef,
@@ -83,6 +84,7 @@ define openldap::server::database(
     syncrepl        => $syncrepl,
     limits          => $limits,
     security        => $security,
+    accessrules     => $accessrules,
   }
 
 }
