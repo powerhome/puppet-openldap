@@ -53,13 +53,11 @@ define openldap::server::database(
   }
 
   if $ensure == present and $backend != 'monitor' and $backend != 'config' and $backend != 'relay' {
-    if !defined(File[$manage_directory]) {
-      file { $manage_directory:
-        ensure => directory,
-        owner  => $::openldap::server::owner,
-        group  => $::openldap::server::group,
-        before => Openldap_database[$title],
-      }
+    file { $manage_directory:
+      ensure => directory,
+      owner  => $::openldap::server::owner,
+      group  => $::openldap::server::group,
+      before => Openldap_database[$title],
     }
   }
 
