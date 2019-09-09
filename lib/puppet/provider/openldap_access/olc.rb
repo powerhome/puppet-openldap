@@ -7,7 +7,7 @@ Puppet::Type.
 
   # TODO: Use ruby bindings (can't find one that support IPC)
 
-  defaultfor :osfamily => :debian, :osfamily => :redhat
+  defaultfor :osfamily => [:debian, :redhat]
 
   mk_resource_methods
 
@@ -57,10 +57,10 @@ Puppet::Type.
       if provider = accesses.find{ |access|
         if resources[name][:position]
           access.suffix == resources[name][:suffix] &&
-          access.position == resources[name][:position]
+          access.position == resources[name][:position].to_s
         else
           access.suffix == resources[name][:suffix] &&
-          access.access == resources[name][:access] &&
+          access.access.flatten == resources[name][:access].flatten &&
           access.what == resources[name][:what]
         end
       }
@@ -105,7 +105,23 @@ Puppet::Type.
   def getDn(*args); self.class.getDn(*args); end
 
   def exists?
-    @property_hash[:ensure] == :present
+    if resource[:position]
+      access = {
+        :suffix   => resource[:suffix],
+        :position => resource[:position].to_s
+      }
+    else
+      access = {
+        :suffix => resource[:suffix],
+        :access => resource[:access].flatten,
+        :what   => resource[:what]
+      }
+    end
+    accesses = self.class.instances.map { |acc|
+      acc_hash = acc.instance_variable_get(:@property_hash)
+      acc_hash.select { |k,v| access.key?(k) }
+    }
+    accesses.include?(access)
   end
 
   def create
@@ -118,7 +134,7 @@ Puppet::Type.
     else
       t << "olcAccess: to #{resource[:what]}\n"
     end
-    resource[:access].each do |a|
+    resource[:access].flatten.each do |a|
       t << "  #{a}\n"
     end
     t.close
@@ -172,7 +188,7 @@ Puppet::Type.
   end
 
   def access=(value)
-    @property_flush[:access] = value
+    @property_flush[:access] = value.flatten
   end
 
   def islast=(value)
@@ -224,7 +240,7 @@ Puppet::Type.
       current_olcAccess.each do |olcAccess|
         if olcAccess[:position].to_i == position.to_i
           t << "olcAccess: {#{position}}to #{resource[:what]}\n"
-          resource[:access].each do |a|
+          resource[:access].flatten.each do |a|
             t << "  #{a}\n"
           end
         else

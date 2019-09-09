@@ -6,7 +6,7 @@ Puppet::Type.
 
   # TODO: Use ruby bindings (can't find one that support IPC)
 
-  defaultfor :osfamily => :debian, :osfamily => :redhat
+  defaultfor :osfamily => [:debian, :redhat]
 
   mk_resource_methods
 
@@ -70,6 +70,8 @@ Puppet::Type.
     case resource[:overlay]
     when 'memberof'
       t << "objectClass: olcMemberOf\n"
+    when 'sock'
+      t << "objectClass: olcOvSocketConfig\n"
     when 'ppolicy'
       t << "objectClass: olcPPolicyConfig\n"
     when 'dynlist'
@@ -90,6 +92,8 @@ Puppet::Type.
       t << "objectClass: olcUniqueConfig\n"
     when 'rwm'
       t << "objectClass: olcRwmConfig\n"
+    when 'sock'
+      t << "objectClass: olcOvSocketConfig\n"
     when 'smbk5pwd'
       t << "objectClass: olcSmbK5PwdConfig\n"
     end
@@ -171,10 +175,15 @@ Puppet::Type.
         end
         # Add current options
         @property_flush[:options].each do |k, v|
-          if v.is_a?(Array)
-            t << "replace: #{k}\n#{v.collect { |x| "#{k}: #{x}" }.join("\n")}\n-\n"
+          if (@property_hash[:options] || {}).member?(k)
+            action = 'replace'
           else
-            t << "replace: #{k}\n#{k}: #{v}\n-\n"
+            action = 'add'
+          end
+          if v.is_a?(Array)
+            t << "#{action}: #{k}\n#{v.collect { |x| "#{k}: #{x}" }.join("\n")}\n-\n"
+          else
+            t << "#{action}: #{k}\n#{k}: #{v}\n-\n"
           end
         end
       end
@@ -200,7 +209,7 @@ Puppet::Type.
     path = default_confdir  + "/" + getPath("olcOverlay={#{@property_hash[:index]}}#{resource[:overlay]},#{getDn(resource[:suffix])}")
     File.delete(path)
 
-    slapcat("ldap:///(objectClass=olcOverlayConfig)", getDn(resource[:suffix])).
+    slapcat("(objectClass=olcOverlayConfig)", getDn(resource[:suffix])).
       split("\n").
       select { |line| line =~ /^dn: / }.
       select { |dn| dn.match(/^dn: olcOverlay=\{(\d+)\}(.+),#{Regexp.quote(getDn(resource[:suffix]))}$/).captures[0].to_i > @property_hash[:index] }.

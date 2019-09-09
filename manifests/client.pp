@@ -36,6 +36,18 @@ class openldap::client(
   $tls_checkpeer                                = undef,
   $tls_reqcert                                  = undef,
 
+  # SASL Options
+  $sasl_mech            = undef,
+  $sasl_realm           = undef,
+  $sasl_authcid         = undef,
+  $sasl_secprops        = undef,
+  $sasl_nocanon         = undef,
+
+  # GSSAPI Options
+  $gssapi_sign                   = undef,
+  $gssapi_encrypt                = undef,
+  $gssapi_allow_remote_principal = undef,
+
   # SUDO Options
   $sudoers_base                                 = undef,
 ) inherits ::openldap::params {

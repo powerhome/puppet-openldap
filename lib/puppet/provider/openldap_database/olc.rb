@@ -7,7 +7,7 @@ Puppet::Type.
 
   # TODO: Use ruby bindings (can't find one that support IPC)
 
-  defaultfor :osfamily => :debian, :osfamily => :redhat
+  defaultfor :osfamily => [:debian, :redhat]
 
   mk_resource_methods
 
@@ -37,7 +37,7 @@ Puppet::Type.
       paragraph.gsub("\n ", "").split("\n").collect do |line|
         case line
         when /^olcDatabase: /
-          index, backend = line.match(/^olcDatabase: \{(\d+)\}(bdb|hdb|mdb|monitor|config|relay)$/).captures
+          index, backend = line.match(/^olcDatabase: \{(\d+)\}(bdb|hdb|mdb|monitor|config|relay)$/i).captures
         when /^olcDbDirectory: /
           directory = line.split(' ')[1]
         when /^olcRootDN: /
@@ -99,11 +99,11 @@ Puppet::Type.
           end
         end
       end
-      if backend == 'monitor' and !suffix
-        suffix = 'cn=monitor'
+      if backend.match(/monitor/i) and !suffix
+        suffix = "cn=#{backend}"
       end
-      if backend == 'config' and !suffix
-        suffix = 'cn=config'
+      if backend.match(/config/i) and !suffix
+        suffix = "cn=#{backend}"
       end
       new(
         :ensure          => :present,
@@ -204,6 +204,12 @@ Puppet::Type.
   end
 
   def create
+    if resource[:rootpw] && resource[:rootpw] !~ /^\{(CRYPT|MD5|SMD5|SSHA|SHA(256|384|512)?)\}.+/
+      require 'securerandom'
+      salt = SecureRandom.random_bytes(4)
+      @resource[:rootpw] = "{SSHA}" + Base64.encode64("#{Digest::SHA1.digest("#{resource[:rootpw]}#{salt}")}#{salt}").chomp
+    end
+
     t = Tempfile.new('openldap_database')
     t << "dn: olcDatabase=#{resource[:backend]},cn=config\n"
     t << "changetype: add\n"
